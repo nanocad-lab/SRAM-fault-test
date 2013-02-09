@@ -1,3 +1,6 @@
+#ifndef JTAG_H
+#define JTAG_H
+
 /*
 This is the JTAG driver file for mbed master
 Refer to buspriate + openOCD
@@ -41,3 +44,5 @@ class JTAG {
         char state; // n=null, r=reset, d=data, i=instruction
         int delay; // wait time for each signal switching, in us
 };
+
+#endif

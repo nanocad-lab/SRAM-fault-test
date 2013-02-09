@@ -1,3 +1,6 @@
+#ifndef SCAN_H
+#define SCAN_H
+
 #include "mbed.h"
 
 class PLL{
@@ -35,3 +38,5 @@ class PLL{
         void setEXTDIV(int val);//Setting clk divider bits for B A[13:10] Range: 0-15, divided by 2^val
         void resetPLL(int val);//Setting PLL_RESET A[158], range: 0:unreset 1:reset
 };
+
+#endif

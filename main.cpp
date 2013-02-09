@@ -9,272 +9,101 @@
 #include "power_up.h"
 #include "scan.h"
 #include "JTAG.h"
+#include "march.h"
 
 using namespace std;
 
-Serial s(USBTX, USBRX);
+Serial _USB_CONSOLE(USBTX, USBRX);
+JTAG* _JTAG;
+FILE* _FP;
 
-DigitalOut RESET (p21);
-DigitalOut finish_flag (LED3);
-
-double voltage;
-double duty_cycle;
-JTAG* jtag;
-
-#define SRAMBANK0_BASE_ADDR 0x00000000
-#define SRAMBANK1_BASE_ADDR 0x60000000
-#define SRAMBANK0_END_ADDR 0x00001FFC
-#define SRAMBANK1_END_ADDR 0x60001FFC
-#define ADDR_INCR 0x00000004
-
-int doMarchSS_SRAMBank0() {
-    unsigned int address;
-    unsigned int value;
-    int iter = 0;
-        
-    //March SS element M0
-    s.printf("Element M0...\r\n");
-    value = 0x00000000;
-    for (address = SRAMBANK0_BASE_ADDR; address <= SRAMBANK0_END_ADDR; address += ADDR_INCR) {
-        //w0
-        jtag->writeMemory(address, value);
-        iter++;
-    }
-    s.printf("Iter: %d\r\n", iter);
-    iter = 0;
-    
-    //March SS element M1
-    s.printf("Element M1...\r\n");
-    for (address = SRAMBANK0_BASE_ADDR; address <= SRAMBANK0_END_ADDR; address += ADDR_INCR) {
-        //r0
-        value = jtag->readMemory(address);
-        if (value != 0)
-            s.printf("ERROR at March SS Bank 0, Element M1.1, addr = %X, exp value = %X, actual value = %X\r\n", address, 0, value);
-        
-        //r0
-        value = jtag->readMemory(address);
-        if (value != 0)
-            s.printf("ERROR at March SS Bank 0, Element M1.2, addr = %X, exp value = %X, actual value = %X\r\n", address, 0, value);
-           
-        //w0
-        value = 0x00000000;
-        jtag->writeMemory(address, value);
-        
-        //r0
-        value = jtag->readMemory(address);
-        if (value != 0)
-            s.printf("ERROR at March SS Bank 0, Element M1.3, addr = %X, exp value = %X, actual value = %X\r\n", address, 0, value);
-        
-        //w1
-        value = 0xFFFFFFFF;
-        jtag->writeMemory(address, value);
-        
-        iter++;
-    }
-    s.printf("Iter: %d\r\n", iter);
-    iter = 0;
-    
-    //March SS element M2
-    s.printf("Element M2...\r\n");
-    for (address = SRAMBANK0_BASE_ADDR; address <= SRAMBANK0_END_ADDR; address += ADDR_INCR) {
-        //r1
-        value = jtag->readMemory(address);
-        if (value != 0xFFFFFFFF)
-            s.printf("ERROR at March SS Bank 0, Element M2.1, addr = %X, exp value = %X, actual value = %X\r\n", address, 0xFFFFFFFF, value);
-            
-        //r1
-        value = jtag->readMemory(address);
-        if (value != 0xFFFFFFFF)
-            s.printf("ERROR at March SS Bank 0, Element M2.2, addr = %X, exp value = %X, actual value = %X\r\n", address, 0xFFFFFFFF, value);
-            
-        //w1
-        value = 0xFFFFFFFF;
-        jtag->writeMemory(address, value);
-        
-        //r1
-        value = jtag->readMemory(address);
-        if (value != 0xFFFFFFFF)
-            s.printf("ERROR at March SS Bank 0, Element M2.3, addr = %X, exp value = %X, actual value = %X\r\n", address, 0xFFFFFFFF, value);
-            
-        //w0
-        value = 0x00000000;
-        jtag->writeMemory(address, value);
-        
-        iter++;
-    }
-    
-    s.printf("Iter: %d\r\n", iter);
-    iter = 0;
-    
-    //March SS element M3
-    s.printf("Element M3...\r\n");
-    for (address = SRAMBANK0_END_ADDR; address >= SRAMBANK0_BASE_ADDR && address <= SRAMBANK0_END_ADDR; address -= ADDR_INCR) {
-        //r0
-        value = jtag->readMemory(address);
-        if (value != 0x00000000)
-            s.printf("ERROR at March SS Bank 0, Element M3.1, addr = %X, exp value = %X, actual value = %X\r\n", address, 0, value);
-            
-        //r0
-        value = jtag->readMemory(address);
-        if (value != 0x00000000)
-            s.printf("ERROR at March SS Bank 0, Element M3.2, addr = %X, exp value = %X, actual value = %X\r\n", address, 0, value);
-            
-        //w0
-        value = 0x00000000;
-        jtag->writeMemory(address, value);
-        
-        //r0
-        value = jtag->readMemory(address);
-        if (value != 0x00000000)
-            s.printf("ERROR at March SS Bank 0, Element M3.3, addr = %X, exp value = %X, actual value = %X\r\n", address, 0, value);
-            
-        //w1
-        value = 0xFFFFFFFF;
-        jtag->writeMemory(address, value);
-        
-        iter++;
-    }
-    
-    s.printf("Iter: %d\r\n", iter);
-    iter = 0;
-    
-    //March SS element M4
-    s.printf("Element M4...\r\n");
-    for (address = SRAMBANK0_END_ADDR; address >= SRAMBANK0_BASE_ADDR && address <= SRAMBANK0_END_ADDR; address -= ADDR_INCR) {
-        //r1
-        value = jtag->readMemory(address);
-        if (value != 0xFFFFFFFF)
-            s.printf("ERROR at March SS Bank 0, Element M4.1, addr = %X, exp value = %X, actual value = %X\r\n", address, 0xFFFFFFFF, value);
-            
-        //r1
-        value = jtag->readMemory(address);
-        if (value != 0xFFFFFFFF)
-            s.printf("ERROR at March SS Bank 0, Element M4.2, addr = %X, exp value = %X, actual value = %X\r\n", address, 0xFFFFFFFF, value);
-            
-        //w1
-        value = 0xFFFFFFFF;
-        jtag->writeMemory(address, value);
-        
-        //r1
-        value = jtag->readMemory(address);
-        if (value != 0xFFFFFFFF)
-            s.printf("ERROR at March SS Bank 0, Element M4.3, addr = %X, exp value = %X, actual value = %X\r\n", address, 0xFFFFFFFF, value);
-            
-        //w0
-        value = 0x00000000;
-        jtag->writeMemory(address, value);
-        
-        iter++;
-    }
-    
-    s.printf("Iter: %d\r\n", iter);
-    iter = 0;
-    
-    //March SS element M5
-    s.printf("Element M5...\r\n");
-    value = 0x00000000;
-    for (address = SRAMBANK0_BASE_ADDR; address <= SRAMBANK0_END_ADDR; address += ADDR_INCR) {
-        //r0
-        value = jtag->readMemory(address);
-        if (value != 0x00000000)
-            s.printf("ERROR at March SS Bank 0, Element M5.1, addr = %X, exp value = %X, actual value = %X\r\n", address, 0, value);
-        
-        iter++;
-    }
-    
-    s.printf("Iter: %d\r\n", iter);
-    iter = 0;
-    
-    return  0;
-}
-
-int doMarchSS_SRAMBank1() {
-    return  0;
-}
-
-//Based on Hamdioui et. al March SS 2002
-int doMarchSS() {
-    int retval = 0;
-    s.printf("...March SS on SRAM Bank 0...\r\n");
-    retval += doMarchSS_SRAMBank0();
-    s.printf("...March SS on SRAM Bank 1...\r\n");
-    retval += doMarchSS_SRAMBank1(); 
-    
-    return retval;
-}
 
 int main()
-{
-    unsigned int address;
-    unsigned int value;
-    FILE *fp;
+{    
+    DigitalOut RESET (p21);
+    DigitalOut FINISH_FLAG (LED3);
     
-    s.printf("*** SRAM_fault_map ***\r\n");
-    voltage = 1;
+    double voltage = 0;
+    double duty_cycle = 0.5;
     PLL clk;
-    jtag =  new JTAG;
+    
+    unsigned int value;
+    unsigned int address;
+
+    _USB_CONSOLE.printf("*** Starting SRAM_fault_map ***\r\n");
+    _USB_CONSOLE.printf("*** Author: Mark Gottscho\r\n");
+    _USB_CONSOLE.printf("*** Based on code by Liangzhen Lai\r\n");
+    _USB_CONSOLE.printf("*** UCLA NanoCAD Lab, www.nanocad.ee.ucla.edu\r\n");
+    
+    voltage = 1;
+    _JTAG =  new JTAG;
 
     // first power up chip with 1V
-    s.printf("Resetting power...\r\n");
+    _USB_CONSOLE.printf("Resetting power...\r\n");
     powerReset();
-    s.printf("Powering up...\r\n");
-    s.printf("Starting with %f V\r\n", voltage);
+    _USB_CONSOLE.printf("Powering up test chip...\r\n");
+    _USB_CONSOLE.printf("Setting SRAM array voltage: %f V\r\n", voltage);
     powerUp(voltage);
     
-    s.printf("Resetting test chip...\r\n");
+    _USB_CONSOLE.printf("Resetting test chip...\r\n");
     RESET = 0;
     wait(1);
     RESET = 1;
 
     // set the clock frequency to 20 MHz
-    s.printf("Setting clock frequency to 20 MHz\r\n");
+    _USB_CONSOLE.printf("Setting test chip clock frequency to 20 MHz\r\n");
     clk.setPLL(20);
 
-    // Init JTAG and halt processor
-    s.printf("Initializing JTAG...\r\n");
-    jtag->DAP_enable();
+    // Init ____JTAG and halt processor
+    _USB_CONSOLE.printf("Initializing JTAG...\r\n");
+    _JTAG->DAP_enable();
     address = 0xE000EDF0;
     value = 0xA05F0003;
-    jtag->writeMemory(address, value);
-    value = jtag->readMemory(address);
+    _JTAG->writeMemory(address, value);
+    value = _JTAG->readMemory(address);
 
-    s.printf("Halting processor...\r\n");   
+    _USB_CONSOLE.printf("Halting processor...\r\n");   
     if (value&0x00000003 != 0x00000003) { //Check to make sure CPU halted
-        s.printf("ERROR: Processor FAILED TO HALT!\r\n");
+        _USB_CONSOLE.printf("ERROR: Processor FAILED TO HALT!\r\n");
         return 1;
     }
         
     //Set SRAM bank 0 offset address
-    s.printf("Setting SRAM bank 0 offset address to 0x%X\r\n", 0x0);
+    _USB_CONSOLE.printf("Setting SRAM bank 0 offset address to 0x%X\r\n", 0x0);
     address = 0x44000008;
     value = 1; //This sets the offset address to 0x000000000
-    jtag->writeMemory(address, value);
+    _JTAG->writeMemory(address, value);
     
     //Init file to write to
-    s.printf("Opening results.csv file...\r\n");
-    fp = fopen("/local/results.csv", "w");
-    if (fp == NULL) {
-        s.printf("ERROR: Couldn't open /local/results.csv\r\n");
+    _USB_CONSOLE.printf("Opening results.csv file...\r\n");
+    _FP = fopen("/local/results.csv", "w");
+    if (_FP == NULL) {
+        _USB_CONSOLE.printf("ERROR: Couldn't open /local/results.csv\r\n");
         return 1;
     }
        
+    _USB_CONSOLE.printf("Init success!\r\n");
+    
     /* MY CODE HERE */
-    s.printf("---------- INIT SUCCESS: BEGINNING MARCH TESTS ----------\r\n");
-    
-    s.printf("Starting test sequence March-SS...\r\n");
+    _USB_CONSOLE.printf("-----------------------------------------------------\r\n");
+    _USB_CONSOLE.printf("---------- BEGINNING MARCH TESTS @ %0.02f V ----------\r\n", voltage);
+    _USB_CONSOLE.printf("-----------------------------------------------------\r\n");
     doMarchSS();
-    s.printf("Test sequence complete!\r\n");
+    _USB_CONSOLE.printf("-----------------------------------------------------\r\n");
+    _USB_CONSOLE.printf("---------- TEST SEQUENCE COMPLETE @ %0.02f V ---------\r\n", voltage);
+    _USB_CONSOLE.printf("-----------------------------------------------------\r\n");
     
     
-    s.printf("Powering down...\r\n");
+    
+    _USB_CONSOLE.printf("Powering down test chip...\r\n");
     powerDown();
     
     //Close file for results
-    if (fp)
-        fclose(fp);
-    s.printf("Done!\r\n");
+    if (_FP)
+        fclose(_FP);
+    _USB_CONSOLE.printf("Done!\r\n");
     while(1) {
-        finish_flag = !finish_flag;
+        FINISH_FLAG = !FINISH_FLAG;
         wait(1);
     }
     return 0;
