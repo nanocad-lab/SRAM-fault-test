@@ -94,6 +94,27 @@ void powerAdjust(double voltage) {
     wait(POWER_UP_TIME);
 }
 
+
+void adjustSRAMVoltage(double voltage) {
+    unsigned int volt = (voltage/3.3*65535);
+    char MSDB, LSDB;
+    LSDB = volt % 0x100;
+    MSDB = volt / 0x100;
+    voltage += 0.05;
+    unsigned int boosted_volt = (voltage/3.3*65535);
+    char MSDB2, LSDB2;
+    LSDB2 = volt % 0x100;
+    MSDB2 = volt / 0x100;
+    power(ADDR,0x34,MSDB2,LSDB2) ;  //update channel E 1V      WRAPPERVD
+    wait(POWER_UP_TIME);
+    power(ADDR,0x32,MSDB2,LSDB2) ;  //update channel C 1V      COREVDD
+    wait(POWER_UP_TIME);
+    power(ADDR,0x30,MSDB,LSDB) ;  //update channel A 1V      SRAMVDD
+    wait(POWER_UP_TIME);
+    power(ADDR,0x36,MSDB2,LSDB2) ;  //update channel G 1V      SENSEVDD
+    wait(POWER_UP_TIME);
+}
+
 void powerDown()
 {
     power(ADDR,0x33,0x00,0x00) ;  //update channel D 3.3V    DVDD

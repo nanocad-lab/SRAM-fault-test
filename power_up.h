@@ -8,5 +8,5 @@ void powerDown();
 void powerReset();
 void debugPower();
 void powerAdjust(double voltage);
-
+void adjustSRAMVoltage(double voltage);
 #endif
