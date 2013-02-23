@@ -21,7 +21,7 @@ int doTest(double voltage) {
     _USB_CONSOLE.printf("---------> Setting SRAM voltage: %0.02f V <--------\r\n", voltage);
     adjustSRAMVoltage(voltage);
     
-    fprintf(_FP, "Voltage %f,Address,Failure,", voltage);
+    fprintf(_FP, "Voltage %f,,Word Number,Fault Code\n", voltage);
        
     /* MY CODE HERE */
     _USB_CONSOLE.printf("-----------------------------------------------------\r\n");
@@ -101,7 +101,7 @@ int main()
     _USB_CONSOLE.printf("************* UCLA NanoCAD Lab, www.nanocad.ee.ucla.edu********\r\n");
     _USB_CONSOLE.printf("***************************************************************\r\n\r\n");
     
-    for (double voltage = 1.00; voltage >= 0.20; voltage -= 0.10) {
+    for (double voltage = 0.60; voltage >= 0.60; voltage -= 0.025) {
         //Init file to write to
         _USB_CONSOLE.printf("** Opening results file...\r\n");
         if (iter == 0)
