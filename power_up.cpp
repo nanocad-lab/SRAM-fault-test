@@ -100,7 +100,12 @@ void adjustSRAMVoltage(double voltage) {
     char MSDB, LSDB;
     LSDB = volt % 0x100;
     MSDB = volt / 0x100;
-    voltage += 0.05;
+    
+    //Adjust peripheral voltage
+    voltage += 0.10;
+    if (voltage > 1.00) //Clamp peripheral voltage at max VDD
+        voltage = 1.00;
+        
     unsigned int boosted_volt = (voltage/3.3*65535);
     char MSDB2, LSDB2;
     LSDB2 = volt % 0x100;

@@ -28,6 +28,9 @@ using namespace std;
 int doMarchSS();
 int doMarchSS_SRAMBank0();
 int doMarchSS_SRAMBank1();
+int doMarchSS_droopVoltage(double nominalVoltage, double droopVoltage);
+int doMarchSS_SRAMBank0_droopVoltage(double nominalVoltage, double droopVoltage);
+int doMarchSS_SRAMBank1_droopVoltage(double nominalVoltage, double droopVoltage);
 
 int marchSS_M0(unsigned int bankNum, unsigned int base_addr, unsigned int end_addr, unsigned int stride);
 int marchSS_M1(unsigned int bankNum, unsigned int base_addr, unsigned int end_addr, unsigned int stride);
