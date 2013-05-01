@@ -17,26 +17,7 @@ Serial _USB_CONSOLE(USBTX, USBRX);
 JTAG* _JTAG;
 FILE* _FP;
 
-int doTest(double voltage) {
-    _USB_CONSOLE.printf("---------> Setting SRAM voltage: %0.02f V <--------\r\n", voltage);
-    adjustSRAMVoltage(voltage);
-    
-    fprintf(_FP, "Voltage %f,,Word Number,Fault Code\n", voltage);
-       
-    _USB_CONSOLE.printf("-----------------------------------------------------\r\n");
-    _USB_CONSOLE.printf("---------- BEGINNING MARCH TESTS @ %0.02f V ----------\r\n", voltage);
-    _USB_CONSOLE.printf("-----------------------------------------------------\r\n");
-    doMarchSS();
-    _USB_CONSOLE.printf("-----------------------------------------------------\r\n");
-    _USB_CONSOLE.printf("---------- TEST SEQUENCE COMPLETE @ %0.02f V ---------\r\n", voltage);
-    _USB_CONSOLE.printf("-----------------------------------------------------\r\n");
-    
-    fprintf(_FP, "\n");
-    
-    return 0;
-}
-
-int doDroopTest(double nominalVoltage, double droopVoltage) {
+/*int doDroopTest(double nominalVoltage, double droopVoltage) {
     fprintf(_FP, "Droop Voltage %f,,Word Number,Fault Code\n", droopVoltage);
       
     _USB_CONSOLE.printf("-----------------------------------------------------------------\r\n");
@@ -50,9 +31,9 @@ int doDroopTest(double nominalVoltage, double droopVoltage) {
     fprintf(_FP, "\n");
     
     return 0;
-}
+}*/
 
-int voltageDroopMarchTestRoutine(double nominalVoltage, double droopVoltageMin, double droopVoltageMax, double voltageStep) {   
+/*int voltageDroopMarchTestRoutine(double nominalVoltage, double droopVoltageMin, double droopVoltageMax, double voltageStep) {   
     int iter = 0;
     int test_return = 0;
     
@@ -125,9 +106,9 @@ int voltageDroopMarchTestRoutine(double nominalVoltage, double droopVoltageMin, 
     }
    
     return 0;
-}
+}*/
 
-int standardMarchTestRoutine(double minVoltage, double maxVoltage, double voltageStep) {
+int standardMarchTests(double minVoltage, double maxVoltage, double voltageStep, unsigned int lowAddr, unsigned int highAddr, int bankNum) {
     int iter = 0;
     int test_return = 0;
     
@@ -135,56 +116,75 @@ int standardMarchTestRoutine(double minVoltage, double maxVoltage, double voltag
         //Init file to write to
         _USB_CONSOLE.printf("** Opening data file...\r\n");
         if (iter == 0)
-            _FP = fopen("/local/stdmt0.csv", "w");
+            _FP = fopen("/local/data0.csv", "w");
         else if (iter == 1)
-            _FP = fopen("/local/stdmt1.csv", "w");
+            _FP = fopen("/local/data1.csv", "w");
         else if (iter == 2)
-            _FP = fopen("/local/stdmt2.csv", "w");
+            _FP = fopen("/local/data2.csv", "w");
         else if (iter == 3)
-            _FP = fopen("/local/stdmt3.csv", "w");
+            _FP = fopen("/local/data3.csv", "w");
         else if (iter == 4)
-            _FP = fopen("/local/stdmt4.csv", "w");
+            _FP = fopen("/local/data4.csv", "w");
         else if (iter == 5)
-            _FP = fopen("/local/stdmt5.csv", "w");
+            _FP = fopen("/local/data5.csv", "w");
         else if (iter == 6)
-            _FP = fopen("/local/stdmt6.csv", "w");
+            _FP = fopen("/local/data6.csv", "w");
         else if (iter == 7)
-            _FP = fopen("/local/stdmt7.csv", "w");
+            _FP = fopen("/local/data7.csv", "w");
         else if (iter == 8)
-            _FP = fopen("/local/stdmt8.csv", "w");
+            _FP = fopen("/local/data8.csv", "w");
         else if (iter == 9)
-            _FP = fopen("/local/stdmt9.csv", "w");
+            _FP = fopen("/local/data9.csv", "w");
         else if (iter == 10)
-            _FP = fopen("/local/stdmt10.csv", "w");
+            _FP = fopen("/local/data10.csv", "w");
         else if (iter == 11)
-            _FP = fopen("/local/stdmt11.csv", "w");
+            _FP = fopen("/local/data11.csv", "w");
         else if (iter == 12)
-            _FP = fopen("/local/stdmt12.csv", "w");
+            _FP = fopen("/local/data12.csv", "w");
         else if (iter == 13)
-            _FP = fopen("/local/stdmt13.csv", "w");
+            _FP = fopen("/local/data13.csv", "w");
         else if (iter == 14)
-            _FP = fopen("/local/stdmt14.csv", "w");
+            _FP = fopen("/local/data14.csv", "w");
         else if (iter == 15)
-            _FP = fopen("/local/stdmt15.csv", "w");
+            _FP = fopen("/local/data15.csv", "w");
         else if (iter == 16)
-            _FP = fopen("/local/stdmt16.csv", "w");
+            _FP = fopen("/local/data16.csv", "w");
         else if (iter == 17)
-            _FP = fopen("/local/stdmt17.csv", "w");
+            _FP = fopen("/local/data17.csv", "w");
         else if (iter == 18)
-            _FP = fopen("/local/stdmt18.csv", "w");
+            _FP = fopen("/local/data18.csv", "w");
         else if (iter == 19)
-            _FP = fopen("/local/stdmt19.csv", "w");
+            _FP = fopen("/local/data19.csv", "w");
         else if (iter == 20)
-            _FP = fopen("/local/stdmt20.csv", "w");
+            _FP = fopen("/local/data20.csv", "w");
         else
-            _FP = fopen("/local/stdmtUNK.csv", "w");
+            _FP = fopen("/local/dataUNK.csv", "w");
             
         if (_FP == NULL) {
             _USB_CONSOLE.printf("** !!! ERROR: Couldn't open data file, iter %d\r\n", iter);
             return 1;
         }
         
-        test_return = doTest(voltage);
+        _USB_CONSOLE.printf("---------> Setting SRAM voltage: %0.03f V <--------\r\n", voltage);
+        adjustSRAMVoltage(voltage);
+        _USB_CONSOLE.printf("---------> Low addr:\t0x%08X <--------\r\n", lowAddr);
+        _USB_CONSOLE.printf("---------> High addr:\t0x%08X <--------\r\n", highAddr);
+        _USB_CONSOLE.printf("---------> Bank num:\t%d <--------\r\n", bankNum);
+    
+        
+        fprintf(_FP, "Voltage %f,,Effective Byte Address,Fault Code\n", voltage);
+           
+        _USB_CONSOLE.printf("-----------------------------------------------------\r\n");
+        _USB_CONSOLE.printf("---------- BEGINNING MARCH TESTS @ %0.03f V ---------\r\n", voltage);
+        _USB_CONSOLE.printf("-----------------------------------------------------\r\n");
+        test_return = doMarchSS(lowAddr, highAddr, bankNum);
+        _USB_CONSOLE.printf("-----------------------------------------------------\r\n");
+        _USB_CONSOLE.printf("---------- COMPLETED MARCH TESTS @ %0.03f V ---------\r\n", voltage);
+        _USB_CONSOLE.printf("-----------------------------------------------------\r\n");
+        
+        fprintf(_FP, "\n");
+        
+        
         //Close file for data
         if (_FP)
             fclose(_FP);
@@ -214,6 +214,13 @@ int main()
     unsigned int address;
     
     int retval = 0;
+    
+    double vmin = 1;
+    double vmax = 1;
+    double vstep = 0;
+    unsigned int lowAddr = SRAMBANK0_BASE_ADDR;
+    unsigned int highAddr = SRAMBANK0_END_ADDR;
+    int bankNum = 0;
     
           
     // power up chip with voltage
@@ -257,15 +264,21 @@ int main()
     
     
     ////////////////////////////////
-    _USB_CONSOLE.printf("***************************************************************\r\n");
-    _USB_CONSOLE.printf("****************** Starting SRAM_fault_map ********************\r\n");
-    _USB_CONSOLE.printf("******************** Author: Mark Gottscho*********************\r\n");
-    _USB_CONSOLE.printf("*************** Based on code by Liangzhen Lai*****************\r\n");
-    _USB_CONSOLE.printf("************* UCLA NanoCAD Lab, www.nanocad.ee.ucla.edu********\r\n");
-    _USB_CONSOLE.printf("***************************************************************\r\n\r\n");
+    _USB_CONSOLE.printf("****************************************************************\r\n");
+    _USB_CONSOLE.printf("****************** Starting SRAM_fault_map *********************\r\n");
+    _USB_CONSOLE.printf("******************** Author: Mark Gottscho *********************\r\n");
+    _USB_CONSOLE.printf("*************** Based on code by Liangzhen Lai *****************\r\n");
+    _USB_CONSOLE.printf("************* UCLA NanoCAD Lab, www.nanocad.ee.ucla.edu ********\r\n");
+    _USB_CONSOLE.printf("****************************************************************\r\n\r\n");
     
-    //retval = standardMarchTestRoutine(0.475, 0.700, 0.025);
-    retval = voltageDroopMarchTestRoutine(1.000, 0.475, 0.600, 0.025);
+    vmin = 0.449;
+    vmax = 0.700;
+    vstep = 0.025;
+    lowAddr = SRAMBANK0_BASE_ADDR;
+    highAddr = SRAMBANK0_BASE_ADDR+K1_INC;
+    bankNum = 0;
+    
+    retval = standardMarchTests(vmin, vmax, vstep, lowAddr, highAddr, bankNum);
  
     if (retval != 0)
         _USB_CONSOLE.printf("** Testing failed!\r\n");

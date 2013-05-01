@@ -22,15 +22,18 @@ using namespace std;
 #define ERROR_BYTE1 2
 #define ERROR_BYTE2 4
 #define ERROR_BYTE3 8
+#define K1_INC 1020
+#define K2_INC 2044
+#define K4_INC 4092
+#define K8_INC 8188
+#define K16_INC 16380
 
 #endif
 
-int doMarchSS();
-int doMarchSS_SRAMBank0();
-int doMarchSS_SRAMBank1();
-int doMarchSS_droopVoltage(double nominalVoltage, double droopVoltage);
-int doMarchSS_SRAMBank0_droopVoltage(double nominalVoltage, double droopVoltage);
-int doMarchSS_SRAMBank1_droopVoltage(double nominalVoltage, double droopVoltage);
+int doMarchSS(unsigned int lowAddr, unsigned int highAddr, int bankNum);
+//int doMarchSS_droopVoltage(double nominalVoltage, double droopVoltage);
+//int doMarchSS_SRAMBank0_droopVoltage(double nominalVoltage, double droopVoltage);
+//int doMarchSS_SRAMBank1_droopVoltage(double nominalVoltage, double droopVoltage);
 
 int marchSS_M0(unsigned int bankNum, unsigned int base_addr, unsigned int end_addr, unsigned int stride);
 int marchSS_M1(unsigned int bankNum, unsigned int base_addr, unsigned int end_addr, unsigned int stride);

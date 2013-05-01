@@ -95,7 +95,7 @@ int marchSS_M1(unsigned int bankNum, unsigned int base_addr, unsigned int end_ad
         
         error = error_byte3 + error_byte2 + error_byte1 + error_byte0;
       //  if (error > 0)
-        fprintf(_FP, "%d,%d,", iter*stride, error); //Log the address (within bank) and the error code (0-15).
+        fprintf(_FP, "%u,%d,", address, error); //Log the absolute address and the error code (0-15).
        // if (error > 0)
        //     _USB_CONSOLE.printf("M1 ERROR at word %d, code %d, expected 0x%08X\r\n", iter*stride, error, ZERO);
         
@@ -174,7 +174,7 @@ int marchSS_M2(unsigned int bankNum, unsigned int base_addr, unsigned int end_ad
         
         error = error_byte3 + error_byte2 + error_byte1 + error_byte0;
      //   if (error > 0)
-        fprintf(_FP, "%d,%d,", iter*stride, error); //Log the address (within bank) and the error code (0-15).
+        fprintf(_FP, "%u,%d,", address, error); //Log the absolute address and the error code (0-15).
       //  if (error > 0)
       //      _USB_CONSOLE.printf("M2 ERROR at word %d, code %d, expected 0x%08X\r\n", iter*stride, error, ONE);
         
@@ -254,7 +254,7 @@ int marchSS_M3(unsigned int bankNum, unsigned int base_addr, unsigned int end_ad
         
         error = error_byte3 + error_byte2 + error_byte1 + error_byte0;
        // if (error > 0)
-        fprintf(_FP, "%d,%d,", (8192-stride)-(iter*stride), error); //Log the address (within bank) and the error code (0-15).
+        fprintf(_FP, "%u,%d,", address, error); //Log the absolute address and the error code (0-15).
       //  if (error > 0)
       //      _USB_CONSOLE.printf("M3 ERROR at word %d, code %d, expected 0x%08X\r\n", iter*stride, error, ZERO);
         iter++;
@@ -333,7 +333,7 @@ int marchSS_M4(unsigned int bankNum, unsigned int base_addr, unsigned int end_ad
         
         error = error_byte3 + error_byte2 + error_byte1 + error_byte0;
       //  if (error > 0)
-        fprintf(_FP, "%d,%d,", (8192-stride)-(iter*stride), error); //Log the address (within bank) and the error code (0-15).
+        fprintf(_FP, "%u,%d,", address, error); //Log the absolute address and the error code (0-15).
       //  if (error > 0)
       //      _USB_CONSOLE.printf("M4 ERROR at word %d, code %d, expected 0x%08X\r\n", iter*stride, error, ONE);
         iter++;
@@ -381,7 +381,7 @@ int marchSS_M5(unsigned int bankNum, unsigned int base_addr, unsigned int end_ad
         
         error = error_byte3 + error_byte2 + error_byte1 + error_byte0;
       //  if (error > 0)
-        fprintf(_FP, "%d,%d,", iter*stride, error); //Log the address (within bank) and the error code (0-15).
+        fprintf(_FP, "%u,%d,", address, error); //Log the absolute address and the error code (0-15).
       //  if (error > 0)
       //      _USB_CONSOLE.printf("M5 ERROR at word %d, code %d, expected 0x%08X\r\n", iter*stride, error, ZERO);
             
@@ -394,40 +394,21 @@ int marchSS_M5(unsigned int bankNum, unsigned int base_addr, unsigned int end_ad
     return 0;
 }
 
-int doMarchSS_SRAMBank0() {  
-    marchSS_M0(0, SRAMBANK0_BASE_ADDR, SRAMBANK0_END_ADDR, ADDR_INCR);      
-    marchSS_M1(0, SRAMBANK0_BASE_ADDR, SRAMBANK0_END_ADDR, ADDR_INCR);      
-    marchSS_M2(0, SRAMBANK0_BASE_ADDR, SRAMBANK0_END_ADDR, ADDR_INCR);      
-    marchSS_M3(0, SRAMBANK0_BASE_ADDR, SRAMBANK0_END_ADDR, ADDR_INCR);      
-    marchSS_M4(0, SRAMBANK0_BASE_ADDR, SRAMBANK0_END_ADDR, ADDR_INCR);      
-    marchSS_M5(0, SRAMBANK0_BASE_ADDR, SRAMBANK0_END_ADDR, ADDR_INCR);      
-    
-    return  0;
-}
-
-int doMarchSS_SRAMBank1() {
-    marchSS_M0(1, SRAMBANK1_BASE_ADDR, SRAMBANK1_END_ADDR, ADDR_INCR);      
-    marchSS_M1(1, SRAMBANK1_BASE_ADDR, SRAMBANK1_END_ADDR, ADDR_INCR);      
-    marchSS_M2(1, SRAMBANK1_BASE_ADDR, SRAMBANK1_END_ADDR, ADDR_INCR);      
-    marchSS_M3(1, SRAMBANK1_BASE_ADDR, SRAMBANK1_END_ADDR, ADDR_INCR);      
-    marchSS_M4(1, SRAMBANK1_BASE_ADDR, SRAMBANK1_END_ADDR, ADDR_INCR);      
-    marchSS_M5(1, SRAMBANK1_BASE_ADDR, SRAMBANK1_END_ADDR, ADDR_INCR);      
-    
-    return  0;
-}
-
 //Based on Hamdioui et. al March SS 2002
-int doMarchSS() {
+int doMarchSS(unsigned int lowAddr, unsigned int highAddr, int bankNum) {
     int retval = 0;
-    _USB_CONSOLE.printf("...March SS on SRAM Bank 0...\r\n");
-    retval += doMarchSS_SRAMBank0();
-    _USB_CONSOLE.printf("...March SS on SRAM Bank 1...\r\n");
-    retval += doMarchSS_SRAMBank1(); 
+    
+    marchSS_M0(bankNum, lowAddr, highAddr, ADDR_INCR);      
+    marchSS_M1(bankNum, lowAddr, highAddr, ADDR_INCR); 
+    marchSS_M2(bankNum, lowAddr, highAddr, ADDR_INCR);
+    marchSS_M3(bankNum, lowAddr, highAddr, ADDR_INCR);
+    marchSS_M4(bankNum, lowAddr, highAddr, ADDR_INCR);
+    marchSS_M5(bankNum, lowAddr, highAddr, ADDR_INCR);     
     
     return retval;
 }
 
-void doVoltageDroop(double nominalVoltage, double droopVoltage) {
+/*void doVoltageDroop(double nominalVoltage, double droopVoltage) {
     float sleepTime = 5.0;
     float pauseTime = 1.0;
     
@@ -439,9 +420,9 @@ void doVoltageDroop(double nominalVoltage, double droopVoltage) {
     _USB_CONSOLE.printf("---------> Setting SRAM voltage: %0.02f V <--------\r\n", nominalVoltage);
     adjustSRAMVoltage(nominalVoltage);
     wait(pauseTime);
-}
+}*/
 
-int doMarchSS_SRAMBank0_droopVoltage(double nominalVoltage, double droopVoltage) {
+/*int doMarchSS_SRAMBank0_droopVoltage(double nominalVoltage, double droopVoltage) {
     _USB_CONSOLE.printf("---------> Setting SRAM voltage: %0.02f V <--------\r\n", nominalVoltage);
     adjustSRAMVoltage(nominalVoltage);
     
@@ -461,9 +442,9 @@ int doMarchSS_SRAMBank0_droopVoltage(double nominalVoltage, double droopVoltage)
     adjustSRAMVoltage(nominalVoltage);   
     
     return  0;
-}
+}*/
 
-int doMarchSS_SRAMBank1_droopVoltage(double nominalVoltage, double droopVoltage) {
+/*int doMarchSS_SRAMBank1_droopVoltage(double nominalVoltage, double droopVoltage) {
     _USB_CONSOLE.printf("---------> Setting SRAM voltage: %0.02f V <--------\r\n", nominalVoltage);
     adjustSRAMVoltage(nominalVoltage);
     
@@ -483,10 +464,10 @@ int doMarchSS_SRAMBank1_droopVoltage(double nominalVoltage, double droopVoltage)
     adjustSRAMVoltage(nominalVoltage);    
     
     return  0;
-}
+}*/
 
 //Based on Hamdioui et. al March SS 2002
-int doMarchSS_droopVoltage(double nominalVoltage, double droopVoltage) {
+/*int doMarchSS_droopVoltage(double nominalVoltage, double droopVoltage) {
     int retval = 0;
     _USB_CONSOLE.printf("...March SS on SRAM Bank 0...\r\n");
     retval += doMarchSS_SRAMBank0_droopVoltage(nominalVoltage, droopVoltage);
@@ -494,4 +475,4 @@ int doMarchSS_droopVoltage(double nominalVoltage, double droopVoltage) {
     retval += doMarchSS_SRAMBank1_droopVoltage(nominalVoltage, droopVoltage); 
     
     return retval;
-}
+}*/
