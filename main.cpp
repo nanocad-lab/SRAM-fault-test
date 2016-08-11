@@ -276,6 +276,7 @@ int main()
     vstep = 0.025;
     lowAddr = SRAMBANK0_BASE_ADDR;
     highAddr = SRAMBANK0_BASE_ADDR+K1_INC;
+    //highAddr = SRAMBANK0_BASE_ADDR+K8_INC; //FIXME: Is K1_INC or K8_INC the correct one?
     bankNum = 0;
     
     retval = standardMarchTests(vmin, vmax, vstep, lowAddr, highAddr, bankNum);
