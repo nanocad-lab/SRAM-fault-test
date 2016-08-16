@@ -1,13 +1,14 @@
-#include "JTAG.h"
+#include "jtag.h"
 #include "march.h"
 #include "mbed.h"
 #include "scan.h"
-#include "power_up.h"
+#include "power.h"
 
 using namespace std;
 
+//all in main.cpp, _FP functionality has not been ported yet however
 extern Serial _USB_CONSOLE;
-extern JTAG* _JTAG;
+extern JTAG* _JTAG; 
 extern FILE* _FP;
 
 int marchSS_M0(unsigned int bankNum, unsigned int base_addr, unsigned int end_addr, unsigned int stride) {
@@ -408,7 +409,7 @@ int doMarchSS(unsigned int lowAddr, unsigned int highAddr, int bankNum) {
     return retval;
 }
 
-/*void doVoltageDroop(double nominalVoltage, double droopVoltage) {
+void doVoltageDroop(double nominalVoltage, double droopVoltage) {
     float sleepTime = 5.0;
     float pauseTime = 1.0;
     
@@ -420,9 +421,9 @@ int doMarchSS(unsigned int lowAddr, unsigned int highAddr, int bankNum) {
     _USB_CONSOLE.printf("---------> Setting SRAM voltage: %0.02f V <--------\r\n", nominalVoltage);
     adjustSRAMVoltage(nominalVoltage);
     wait(pauseTime);
-}*/
+}
 
-/*int doMarchSS_SRAMBank0_droopVoltage(double nominalVoltage, double droopVoltage) {
+int doMarchSS_SRAMBank0_droopVoltage(double nominalVoltage, double droopVoltage) {
     _USB_CONSOLE.printf("---------> Setting SRAM voltage: %0.02f V <--------\r\n", nominalVoltage);
     adjustSRAMVoltage(nominalVoltage);
     
@@ -442,9 +443,9 @@ int doMarchSS(unsigned int lowAddr, unsigned int highAddr, int bankNum) {
     adjustSRAMVoltage(nominalVoltage);   
     
     return  0;
-}*/
+}
 
-/*int doMarchSS_SRAMBank1_droopVoltage(double nominalVoltage, double droopVoltage) {
+int doMarchSS_SRAMBank1_droopVoltage(double nominalVoltage, double droopVoltage) {
     _USB_CONSOLE.printf("---------> Setting SRAM voltage: %0.02f V <--------\r\n", nominalVoltage);
     adjustSRAMVoltage(nominalVoltage);
     
@@ -464,10 +465,10 @@ int doMarchSS(unsigned int lowAddr, unsigned int highAddr, int bankNum) {
     adjustSRAMVoltage(nominalVoltage);    
     
     return  0;
-}*/
+}
 
 //Based on Hamdioui et. al March SS 2002
-/*int doMarchSS_droopVoltage(double nominalVoltage, double droopVoltage) {
+int doMarchSS_droopVoltage(double nominalVoltage, double droopVoltage) {
     int retval = 0;
     _USB_CONSOLE.printf("...March SS on SRAM Bank 0...\r\n");
     retval += doMarchSS_SRAMBank0_droopVoltage(nominalVoltage, droopVoltage);
@@ -475,4 +476,4 @@ int doMarchSS(unsigned int lowAddr, unsigned int highAddr, int bankNum) {
     retval += doMarchSS_SRAMBank1_droopVoltage(nominalVoltage, droopVoltage); 
     
     return retval;
-}*/
+}

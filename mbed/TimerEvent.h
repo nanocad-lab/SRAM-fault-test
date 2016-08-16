@@ -1,58 +1,56 @@
-/* mbed Microcontroller Library - TimerEvent
- * Copyright (c) 2007-2009 ARM Limited. All rights reserved.
- */ 
- 
+/* mbed Microcontroller Library
+ * Copyright (c) 2006-2013 ARM Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 #ifndef MBED_TIMEREVENT_H
 #define MBED_TIMEREVENT_H
+
+#include "ticker_api.h"
+#include "us_ticker_api.h"
 
 namespace mbed {
 
 /** Base abstraction for timer interrupts
-*/
+ *
+ * @Note Synchronization level: Interrupt safe
+ */
 class TimerEvent {
-
 public:
-
     TimerEvent();
-    
+    TimerEvent(const ticker_data_t *data);
+
     /** The handler registered with the underlying timer interrupt
      */
-    static void irq();
+    static void irq(uint32_t id);
 
     /** Destruction removes it...
      */
     virtual ~TimerEvent();
 
 protected:
-
-    /** The handler called to service the timer event of the derived class
-     */
+    // The handler called to service the timer event of the derived class
     virtual void handler() = 0;
-    
-    /** Insert in to linked list
-     */
-    void insert(unsigned int timestamp);
-    
-    /** Remove from linked list, if in it
-     */
+
+    // insert in to linked list
+    void insert(timestamp_t timestamp);
+
+    // remove from linked list, if in it
     void remove();
-    
-    /** Get the current usec timestamp
-     */
-    static unsigned int timestamp();
 
-    /** The head of the list of the events, NULL if none
-     */
-    static TimerEvent *_head;
-    
-    /** Pointer to the next in the list, NULL if last
-     */
-    TimerEvent *_next;
-    
-    /** The timestamp at which the even should be triggered
-     */
-    unsigned int _timestamp;
+    ticker_event_t event;
 
+    const ticker_data_t *_ticker_data;
 };
 
 } // namespace mbed

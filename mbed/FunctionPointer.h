@@ -1,86 +1,67 @@
-/* mbed Microcontroller Library - FunctionPointer
- * Copyright (c) 2007-2009 ARM Limited. All rights reserved.
- */ 
- 
+/* mbed Microcontroller Library
+ * Copyright (c) 2006-2015 ARM Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 #ifndef MBED_FUNCTIONPOINTER_H
 #define MBED_FUNCTIONPOINTER_H
 
+#include "Callback.h"
+#include "toolchain.h"
 #include <string.h>
+#include <stdint.h>
 
-namespace mbed { 
+namespace mbed {
 
-/** A class for storing and calling a pointer to a static or member void function
- */
-class FunctionPointer {
 
+// Declarations for backwards compatibility
+// To be foward compatible, code should adopt the Callback class
+template <typename R, typename A1>
+class FunctionPointerArg1 : public Callback<R(A1)> {
 public:
-
-    /** Create a FunctionPointer, attaching a static function
-     * 
-     *  @param function The void static function to attach (default is none)
-     */
-    FunctionPointer(void (*function)(void) = 0);
-
-    /** Create a FunctionPointer, attaching a member function
-     * 
-     *  @param object The object pointer to invoke the member function on (i.e. the this pointer)
-     *  @param function The address of the void member function to attach 
-     */
-    template<typename T>    
-    FunctionPointer(T *object, void (T::*member)(void)) {
-        attach(object, member);
-    }
-
-    /** Attach a static function
-     * 
-     *  @param function The void static function to attach (default is none)
-     */
-    void attach(void (*function)(void) = 0);
-    
-    /** Attach a member function
-     * 
-     *  @param object The object pointer to invoke the member function on (i.e. the this pointer)
-     *  @param function The address of the void member function to attach 
-     */
-    template<typename T>
-    void attach(T *object, void (T::*member)(void)) {
-        _object = static_cast<void*>(object);
-        memcpy(_member, (char*)&member, sizeof(member));
-        _membercaller = &FunctionPointer::membercaller<T>;
-        _function = 0;
-    }
-
-    /** Call the attached static or member function
-     */        
-    void call();
-        
-private:
+    MBED_DEPRECATED("FunctionPointerArg1<R, A> has been replaced by Callback<R(A)>")
+    FunctionPointerArg1(R (*function)(A1) = 0)
+        : Callback<R(A1)>(function) {}
 
     template<typename T>
-    static void membercaller(void *object, char *member) {    
-        T* o = static_cast<T*>(object);
-        void (T::*m)(void);
-        memcpy((char*)&m, member, sizeof(m));
-        (o->*m)();
+    MBED_DEPRECATED("FunctionPointerArg1<R, A> has been replaced by Callback<R(A)>")
+    FunctionPointerArg1(T *object, R (T::*member)(A1))
+        : Callback<R(A1)>(object, member) {}
+
+    R (*get_function())(A1) {
+        return *reinterpret_cast<R (**)(A1)>(this);
     }
-    
-    /** Static function pointer - 0 if none attached
-     */
-    void (*_function)(void);
-    
-    /** Object this pointer - 0 if none attached
-     */
-    void *_object;
-    
-    /** Raw member function pointer storage - converted back by registered _membercaller
-     */
-    char _member[16];
-    
-    /** Registered membercaller function to convert back and call _member on _object
-     */
-    void (*_membercaller)(void*, char*);
-    
 };
+
+template <typename R>
+class FunctionPointerArg1<R, void> : public Callback<R()> {
+public:
+    MBED_DEPRECATED("FunctionPointer has been replaced by Callback<void()>")
+    FunctionPointerArg1(R (*function)() = 0)
+        : Callback<R()>(function) {}
+
+    template<typename T>
+    MBED_DEPRECATED("FunctionPointer has been replaced by Callback<void()>")
+    FunctionPointerArg1(T *object, R (T::*member)())
+        : Callback<R()>(object, member) {}
+
+    R (*get_function())() {
+        return *reinterpret_cast<R (**)()>(this);
+    }
+};
+
+typedef FunctionPointerArg1<void, void> FunctionPointer;
+
 
 } // namespace mbed
 

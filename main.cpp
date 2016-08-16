@@ -1,23 +1,33 @@
-/* Author: Mark Gottscho
- * UCLA NanoCAD Lab
- * Based on code by Liangzhen Lai
- * For the mbed microcontroller, NSF Variability Expedition Red Mini Cooper board
- * SRAM Fault Map program
- */ 
 
 #include "mbed.h"
-#include "power_up.h"
+#include "dac.h"
+#include "board_test.h"
 #include "scan.h"
-#include "JTAG.h"
+#include "power.h"
+#include "pinout.h"
+#include "pll.h"
+#include "lcd.h"
+#include "jtag.h"
+#include "mmap.h"
+#include "clock.h"
+#include "EasyBMP.h"
+#include "main.h"
 #include "march.h"
 
-using namespace std;
 
+//port from dpcs
 Serial _USB_CONSOLE(USBTX, USBRX);
 JTAG* _JTAG;
-FILE* _FP;
+FILE* _FP; //PORT THIS FUNCTIONALITY FROM DPCS
 
-/*int doDroopTest(double nominalVoltage, double droopVoltage) {
+
+DigitalOut myled(LED4);
+
+#ifdef WRITE_RESULTS
+//LocalFileSystem local("local");               // Create the local filesystem under the name "local"
+#endif
+
+int doDroopTest(double nominalVoltage, double droopVoltage) {
     fprintf(_FP, "Droop Voltage %f,,Word Number,Fault Code\n", droopVoltage);
       
     _USB_CONSOLE.printf("-----------------------------------------------------------------\r\n");
@@ -31,9 +41,9 @@ FILE* _FP;
     fprintf(_FP, "\n");
     
     return 0;
-}*/
+}
 
-/*int voltageDroopMarchTestRoutine(double nominalVoltage, double droopVoltageMin, double droopVoltageMax, double voltageStep) {   
+int voltageDroopMarchTestRoutine(double nominalVoltage, double droopVoltageMin, double droopVoltageMax, double voltageStep) {   
     int iter = 0;
     int test_return = 0;
     
@@ -106,7 +116,7 @@ FILE* _FP;
     }
    
     return 0;
-}*/
+}
 
 int standardMarchTests(double minVoltage, double maxVoltage, double voltageStep, unsigned int lowAddr, unsigned int highAddr, int bankNum) {
     int iter = 0;
@@ -200,18 +210,13 @@ int standardMarchTests(double minVoltage, double maxVoltage, double voltageStep,
     return 0;
 }
 
-
 int main()
-{    
+{
     DigitalOut FINISH_FLAG (LED3);
-    DigitalOut RESET (p21); 
     
-    double duty_cycle = 0.5;
-    double voltage = 1;
-    PLL clk;
-    
-    unsigned int value;
-    unsigned int address;
+    //begin variables port from dpcs
+    //unsigned int value;
+    //unsigned int address;
     
     int retval = 0;
     
@@ -221,76 +226,108 @@ int main()
     unsigned int lowAddr = SRAMBANK0_BASE_ADDR;
     unsigned int highAddr = SRAMBANK0_END_ADDR;
     int bankNum = 0;
-    
-          
-    // power up chip with voltage
+    //end variables port from dpcs
+
+    // power up the board
     _USB_CONSOLE.printf("** Resetting power...\r\n");
-    powerReset();
+    power_down();
     _USB_CONSOLE.printf("** Powering up test chip...\r\n");
-    _USB_CONSOLE.printf("** Setting global voltages: %f V\r\n", voltage);
-    powerUp(voltage);
-    
+    float core_volt = 1;
+    _USB_CONSOLE.printf("** Setting global voltages: %f V\r\n", core_volt);
+    power_up(core_volt); // Power Up Chip
+    pc.printf("Powered up!\r\n");
+
     _USB_CONSOLE.printf("** Resetting test chip...\r\n");
-    RESET = 0;
-    wait(1);
-    RESET = 1;
+    // initializing the resets
+    PORESETn = 0;
+    CORERESETn = 0;
+    wait_us(100);
+    PORESETn = 1;
+    CORERESETn = 1;
 
-    // set the clock frequency to 20 MHz
-    _USB_CONSOLE.printf("** Setting test chip clock frequency to 20 MHz\r\n");
-    clk.setPLL(20);
+    //maybe set PLL to 20 MHz here?
 
-    // Init _JTAG and halt processor
-    _USB_CONSOLE.printf("** Initializing JTAG...\r\n");
     _JTAG = new JTAG;
-    _JTAG->DAP_enable();
-    address = 0xE000EDF0;
-    value = 0xA05F0003;
-    _JTAG->writeMemory(address, value);
-    value = _JTAG->readMemory(address);
-
-    _USB_CONSOLE.printf("** Halting processor...\r\n");   
-    if (value&0x00000003 != 0x00000003) { //Check to make sure CPU halted
-        _USB_CONSOLE.printf("** !!! ERROR: Processor FAILED TO HALT!\r\n");
-        return 1;
+    // read and verify chip ID
+    pc.printf("** Verify Chip ID...\r\n");
+    int idcode = _JTAG->readID();
+    
+    if(idcode != 0x4ba00477) {
+        pc.printf("ERROR: IDCode %X\r\n", idcode);
+        wait(2);
+        power_down();
+        return -1;
     }
-        
-    //Set SRAM bank 0 offset address
-    _USB_CONSOLE.printf("** Setting SRAM bank 0 offset address to 0x%X\r\n", 0x0);
-    address = 0x44000008;
-    value = 1; //This sets the offset address to 0x000000000
-    _JTAG->writeMemory(address, value);
-         
+    pc.printf("IDCode %X\r\n", idcode);
+
+    // power up the JTAG port
+    _JTAG->reset();
+    _JTAG->leaveState();
+    _JTAG->PowerupDAP();
+
+    // setup necessary internal clock source selection
+    _JTAG->writeMemory(intclk_source, 2);
+    _JTAG->writeMemory(extclk_source, 1);
+    _JTAG->writeMemory(ext_div_by, 10);
+
+    float voltage=1;
+    power_core(voltage); //adjust core voltage to 1V
+    pc.printf("V: %f\r\n", voltage);
+
+    // Halt Core and set Imem to begin at 0
+    if (_JTAG->haltCore() != 0) {
+        pc.printf("ERROR: Could not halt core \r\n");
+        wait(2);
+        power_down();
+        return -1;
+    }
+    if (_JTAG->zeroImemOffset() != 0) {
+        pc.printf("ERROR: Could not set Instruction Memory to 0x00 offset \r\n");
+        wait(2);
+        power_down();
+        return -1;
+    }
+    
+    
     _USB_CONSOLE.printf("** Init success!\r\n");
     
     
-    ////////////////////////////////
+    // Begin march testing
+    ////////////////////////////////    
     _USB_CONSOLE.printf("****************************************************************\r\n");
     _USB_CONSOLE.printf("****************** Starting SRAM_fault_map *********************\r\n");
     _USB_CONSOLE.printf("******************** Author: Mark Gottscho *********************\r\n");
     _USB_CONSOLE.printf("*************** Based on code by Liangzhen Lai *****************\r\n");
-    _USB_CONSOLE.printf("************* UCLA NanoCAD Lab, www.nanocad.ee.ucla.edu ********\r\n");
+    _USB_CONSOLE.printf("************ Ported to Orange Ferrari by Albert Liu ************\r\n");
+    _USB_CONSOLE.printf("********** UCLA NanoCAD Lab, www.nanocad.ee.ucla.edu ***********\r\n");
     _USB_CONSOLE.printf("****************************************************************\r\n\r\n");
     
+    // IMem March Test Parameters
     vmin = 0.449;
     vmax = 0.700;
     vstep = 0.025;
-    lowAddr = SRAMBANK0_BASE_ADDR;
-    highAddr = SRAMBANK0_BASE_ADDR+K1_INC;
-    //highAddr = SRAMBANK0_BASE_ADDR+K8_INC; //FIXME: Is K1_INC or K8_INC the correct one?
+    lowAddr = IMEM_MIN;
+    highAddr = IMEM_MAX - 0x04;
     bankNum = 0;
     
     retval = standardMarchTests(vmin, vmax, vstep, lowAddr, highAddr, bankNum);
+    
+    // Insert another round of March Tests for DMem
+    // standardMarchTests() will need to be rewritten as to not overwrite IMem tests
  
     if (retval != 0)
         _USB_CONSOLE.printf("** Testing failed!\r\n");
         
     _USB_CONSOLE.printf("** Powering down test chip...\r\n");
-    powerDown();
+    power_down();
     
     _USB_CONSOLE.printf("** Done!\r\n");
+    
     while(1) {
-        FINISH_FLAG = !FINISH_FLAG;
+        FINISH_FLAG != FINISH_FLAG;
         wait(1);
     }
+    
+    delete _JTAG;
     return 0;
 }

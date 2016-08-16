@@ -1,35 +1,17 @@
-/** Implementation of the C time.h functions
+/* mbed Microcontroller Library
+ * Copyright (c) 2006-2013 ARM Limited
  *
- * Provides mechanisms to set and read the current time, based
- * on the microcontroller Real-Time Clock (RTC), plus some 
- * standard C manipulation and formating functions. 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Example:
- * @code
- * #include "mbed.h"
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * int main() {
- *     set_time(1256729737);  // Set RTC time to Wed, 28 Oct 2009 11:35:37
- *      
- *     while(1) {    
- *         time_t seconds = time(NULL);
- *         
- *         printf("Time as seconds since January 1, 1970 = %d\n", seconds);
- *  
- *         printf("Time as a basic string = %s", ctime(&seconds));
- *
- *         char buffer[32];
- *         strftime(buffer, 32, "%I:%M %p\n", localtime(&seconds));
- *         printf("Time as a custom formatted string = %s", buffer);
- *    
- *         wait(1);
- *     }
- * }
- * @endcode
- */
- 
-/* mbed Microcontroller Library - rtc_time
- * Copyright (c) 2009 ARM Limited. All rights reserved.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #include <time.h>
@@ -38,38 +20,45 @@
 extern "C" {
 #endif
 
-#if 0 // for documentation only
-/** Get the current time
+/** Implementation of the C time.h functions
  *
- *  Returns the current timestamp as the number of seconds since January 1, 1970
- *  (the UNIX timestamp). The value is based on the current value of the 
- *  microcontroller Real-Time Clock (RTC), which can be set using <set_time>.
- *
- * @param t Pointer to a time_t to be set, or NULL if not used
- *
- * @returns
- *   Number of seconds since January 1, 1970 (the UNIX timestamp)
+ * Provides mechanisms to set and read the current time, based
+ * on the microcontroller Real-Time Clock (RTC), plus some
+ * standard C manipulation and formating functions.
  *
  * Example:
  * @code
  * #include "mbed.h"
- * 
+ *
  * int main() {
- *     time_t seconds = time(NULL);
- *     printf("It is %d seconds since January 1, 1970\n", seconds);
+ *     set_time(1256729737);  // Set RTC time to Wed, 28 Oct 2009 11:35:37
+ *
+ *     while(1) {
+ *         time_t seconds = time(NULL);
+ *
+ *         printf("Time as seconds since January 1, 1970 = %d\n", seconds);
+ *
+ *         printf("Time as a basic string = %s", ctime(&seconds));
+ *
+ *         char buffer[32];
+ *         strftime(buffer, 32, "%I:%M %p\n", localtime(&seconds));
+ *         printf("Time as a custom formatted string = %s", buffer);
+ *
+ *         wait(1);
+ *     }
  * }
  * @endcode
  */
-time_t time(time_t *t);
-#endif
 
 /** Set the current time
  *
  * Initialises and sets the time of the microcontroller Real-Time Clock (RTC)
- * to the time represented by the number of seconds since January 1, 1970 
- * (the UNIX timestamp). 
- * 
- * @param t Number of seconds since January 1, 1970 (the UNIX timestamp) 
+ * to the time represented by the number of seconds since January 1, 1970
+ * (the UNIX timestamp).
+ *
+ * @param t Number of seconds since January 1, 1970 (the UNIX timestamp)
+ *
+ * @Note Synchronization level: Thread safe
  *
  * Example:
  * @code
@@ -79,133 +68,20 @@ time_t time(time_t *t);
  *     set_time(1256729737); // Set time to Wed, 28 Oct 2009 11:35:37
  * }
  * @endcode
- */ 
+ */
 void set_time(time_t t);
 
-#if 0 // for documentation only
-/** Converts the tm structure in to a timestamp in seconds since January 1, 1970
- *  (the UNIX timestamp). The values of tm_wday and tm_yday of the tm structure 
- *  are also updated to their appropriate values.
+/** Attach an external RTC to be used for the C time functions
  *
- * @param t The tm structure to convert
+ * @Note Synchronization level: Thread safe
  *
- * @returns
- *   The converted timestamp
- *
- * Example:
- * @code
- * #include "mbed.h"
- *
- * int main() {
- *     // setup time structure for Wed, 28 Oct 2009 11:35:37
- *     struct tm t;
- *     t.tm_sec = 37;    // 0-59
- *     t.tm_min = 35;    // 0-59
- *     t.tm_hour = 11;   // 0-23
- *     t.tm_mday = 28;   // 1-31
- *     t.tm_mon = 9;     // 0-11
- *     t.tm_year = 109;  // year since 1900
- * 
- *     // convert to timestamp and display (1256729737)
- *     time_t seconds = mktime(&t);
- *     printf("Time as seconds since January 1, 1970 = %d\n", seconds);
- * }
- * @endcode
+ * @param read_rtc pointer to function which returns current UNIX timestamp
+ * @param write_rtc pointer to function which sets current UNIX timestamp, can be NULL
+ * @param init_rtc pointer to funtion which initializes RTC, can be NULL
+ * @param isenabled_rtc pointer to function wich returns if the rtc is enabled, can be NULL
  */
-time_t mktime(struct tm *t);
-#endif
-
-#if 0 // for documentation only
-/** Converts the timestamp pointed to by t to a (statically allocated) 
- *  tm structure. 
- * 
- * @param t Pointer to the timestamp
- *
- * @returns
- *   Pointer to the (statically allocated) tm structure
- *
- * Example:
- * @code
- * #include "mbed.h"
- *
- * int main() {
- *     time_t seconds = 1256729737;
- *     struct tm *t = localtime(&seconds);
- * }
- * @endcode
- */
-struct tm *localtime(const time_t *t);
-#endif
-
-#if 0 // for documentation only
-/** Converts a timestamp to a human-readable string
- *  
- * Converts a time_t timestamp in seconds since January 1, 1970 (the UNIX
- * timestamp) to a human readable string format. The result is of the 
- * format: "Wed Oct 28 11:35:37 2009\n"
- *
- * Example:
- * @code
- * #include "mbed.h"
- *
- * int main() {
- *     time_t seconds = time(NULL);
- *     printf("Time as a string = %s", ctime(&seconds));
- * }
- * @endcode
- * 
- * @param t The timestamp to convert
- *
- * @returns Pointer to a (statically allocated) string containing the
- *            human readable representation, including a '\n' character
- */
-char *ctime(const time_t *t);
-#endif
- 
-#if 0 // for documentation only
-/** Converts a tm structure to a custom format human-readable string
- *  
- * Creates a formated string from a tm structure, based on a string format 
- * specifier provided.
- *
- * Format Specifiers: 
- * - %S - Second (00-59)
- * - %M - Minute (00-59)
- * - %H - Hour (00-23)
- * - %d - Day (01-31)
- * - %m - Month (01-12)
- * - %Y/%y - Year (2009/09)
- * - %A/%a - Weekday Name (Monday/Mon)
- * - %B/%b - Month Name (January/Jan)
- * - %I - 12 Hour Format (01-12)
- * - %p - "AM" or "PM"
- * - %X - Time (14:55:02)
- * - %x - Date (08/23/01)
- *
- * @param buffer String buffer to store the result
- * @param max Maximum number of characters to store in the buffer
- * @param format Format specifier string
- * @param t Pointer to the tm structure to convert
- *
- * @returns
- *   Number of characters copied
- * 
- * Example:
- * @code
- * #include "mbed.h"
- * 
- * int main() {
- *     time_t seconds = time(NULL);
- *  
- *     char buffer[32];
- *     strftime(buffer, 32, "%I:%M %p\n", localtime(&seconds));
- *     printf("Time as a formatted string = %s", buffer);
- * }   
- * @endcode
- */
-size_t strftime(char *buffer, size_t max, const char *format, const struct tm *t);
-#endif
+void attach_rtc(time_t (*read_rtc)(void), void (*write_rtc)(time_t), void (*init_rtc)(void), int (*isenabled_rtc)(void));
 
 #ifdef __cplusplus
 }
-#endif 
+#endif

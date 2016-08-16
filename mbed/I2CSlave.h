@@ -1,22 +1,32 @@
-/* mbed Microcontroller Library - I2CSlave
- * Copyright (c) 2007-2011 ARM Limited. All rights reserved.
- */ 
- 
+/* mbed Microcontroller Library
+ * Copyright (c) 2006-2013 ARM Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 #ifndef MBED_I2C_SLAVE_H
 #define MBED_I2C_SLAVE_H
 
-#include "device.h"
+#include "platform.h"
 
 #if DEVICE_I2CSLAVE
 
-#include "platform.h"
-#include "PinNames.h"
-#include "PeripheralNames.h"
-#include "Base.h"
+#include "i2c_api.h"
 
 namespace mbed {
 
 /** An I2C Slave, used for communicating with an I2C Master device
+ *
+ * @Note Synchronization level: Not protected
  *
  * Example:
  * @code
@@ -33,7 +43,7 @@ namespace mbed {
  *     while (1) {
  *         int i = slave.receive();
  *         switch (i) {
- *             case I2CSlave::ReadAddressed: 
+ *             case I2CSlave::ReadAddressed:
  *                 slave.write(msg, strlen(msg) + 1); // Includes null char
  *                 break;
  *             case I2CSlave::WriteGeneral:
@@ -48,17 +58,16 @@ namespace mbed {
  *         for(int i = 0; i < 10; i++) buf[i] = 0;    // Clear buffer
  *     }
  * }
- * @endcode                  
+ * @endcode
  */
-class I2CSlave : public Base {
+class I2CSlave {
 
 public:
-    
     enum RxStatus {
-        NoData              = 0
-        , ReadAddressed     = 1
-        , WriteGeneral      = 2
-        , WriteAddressed    = 3
+        NoData         = 0,
+        ReadAddressed  = 1,
+        WriteGeneral   = 2,
+        WriteAddressed = 3
     };
 
     /** Create an I2C Slave interface, connected to the specified pins.
@@ -66,7 +75,7 @@ public:
      *  @param sda I2C data line pin
      *  @param scl I2C clock line pin
      */
-    I2CSlave(PinName sda, PinName scl, const char *name = NULL);
+    I2CSlave(PinName sda, PinName scl);
 
     /** Set the frequency of the I2C interface
      *
@@ -81,7 +90,7 @@ public:
      *  - NoData            - the slave has not been addressed
      *  - ReadAddressed     - the master has requested a read from this slave
      *  - WriteAddressed    - the master is writing to this slave
-     *  - WriteGeneral      - the master is writing to all slave 
+     *  - WriteGeneral      - the master is writing to all slave
      */
     int receive(void);
 
@@ -94,7 +103,7 @@ public:
      *       0 on success,
      *   non-0 otherwise
      */
-    int read(char *data, int length); 
+    int read(char *data, int length);
 
     /** Read a single byte from an I2C master.
      *
@@ -127,8 +136,8 @@ public:
     /** Sets the I2C slave address.
      *
      *  @param address The address to set for the slave (ignoring the least
-     *    signifcant bit). If set to 0, the slave will only respond to the
-     *    general call address.
+     *  signifcant bit). If set to 0, the slave will only respond to the
+     *  general call address.
      */
     void address(int address);
 
@@ -137,8 +146,7 @@ public:
     void stop(void);
 
 protected:
-
-    I2CName     _i2c;
+    i2c_t _i2c;
 };
 
 } // namespace mbed
@@ -146,4 +154,3 @@ protected:
 #endif
 
 #endif
-

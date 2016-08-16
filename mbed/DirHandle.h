@@ -1,16 +1,29 @@
-/* mbed Microcontroller Library - DirHandler
- * Copyright (c) 2008-2009 ARM Limited. All rights reserved.
- */ 
- 
+/* mbed Microcontroller Library
+ * Copyright (c) 2006-2013 ARM Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 #ifndef MBED_DIRHANDLE_H
 #define MBED_DIRHANDLE_H
 
-#ifdef __ARMCC_VERSION
-# define NAME_MAX 255
+#if defined(__ARMCC_VERSION) || defined(__ICCARM__)
+#   define NAME_MAX 255
 typedef int mode_t;
+
 #else
-# include <sys/syslimits.h>
+#   include <sys/syslimits.h>
 #endif
+
 #include "FileHandle.h"
 
 struct dirent {
@@ -24,17 +37,19 @@ namespace mbed {
  *  at least closedir, readdir and rewinddir.
  *
  *  If a FileSystemLike class defines the opendir method, then the
- *  directories of an object of that type can be accessed by 
- *  DIR *d = opendir("/example/directory") (or opendir("/example") 
+ *  directories of an object of that type can be accessed by
+ *  DIR *d = opendir("/example/directory") (or opendir("/example")
  *  to open the root of the filesystem), and then using readdir(d) etc.
  *
  *  The root directory is considered to contain all FileLike and
  *  FileSystemLike objects, so the DIR* returned by opendir("/") will
  *  reflect this.
+ *
+ *  @Note Synchronization level: Set by subclass
  */
 class DirHandle {
 
- public:
+public:
     /** Closes the directory.
      *
      *  @returns
@@ -47,9 +62,9 @@ class DirHandle {
      *  advances the position to the next entry.
      *
      * @returns
-     *   A pointer to a dirent structure representing the
-     *   directory entry at the current position, or NULL on reaching
-     *   end of directory or error.
+     *  A pointer to a dirent structure representing the
+     *  directory entry at the current position, or NULL on reaching
+     *  end of directory or error.
      */
     virtual struct dirent *readdir()=0;
 
@@ -69,8 +84,23 @@ class DirHandle {
      *
      *  @param location The location to seek to. Must be a value returned by telldir.
      */
-    virtual void seekdir(off_t location) { }
+    virtual void seekdir(off_t location) { (void)location;}
 
+    virtual ~DirHandle() {}
+
+protected:
+
+    /** Acquire exclusive access to this object.
+     */
+    virtual void lock() {
+        // Stub
+    }
+
+    /** Release exclusive access to this object.
+     */
+    virtual void unlock() {
+        // Stub
+    }
 };
 
 } // namespace mbed

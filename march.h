@@ -30,16 +30,17 @@ using namespace std;
 
 #endif
 
-int doMarchSS(unsigned int lowAddr, unsigned int highAddr, int bankNum);
-//int doMarchSS_droopVoltage(double nominalVoltage, double droopVoltage);
-//int doMarchSS_SRAMBank0_droopVoltage(double nominalVoltage, double droopVoltage);
-//int doMarchSS_SRAMBank1_droopVoltage(double nominalVoltage, double droopVoltage);
-
 int marchSS_M0(unsigned int bankNum, unsigned int base_addr, unsigned int end_addr, unsigned int stride);
 int marchSS_M1(unsigned int bankNum, unsigned int base_addr, unsigned int end_addr, unsigned int stride);
 int marchSS_M2(unsigned int bankNum, unsigned int base_addr, unsigned int end_addr, unsigned int stride);
 int marchSS_M3(unsigned int bankNum, unsigned int base_addr, unsigned int end_addr, unsigned int stride);
 int marchSS_M4(unsigned int bankNum, unsigned int base_addr, unsigned int end_addr, unsigned int stride);
 int marchSS_M5(unsigned int bankNum, unsigned int base_addr, unsigned int end_addr, unsigned int stride);
+
+int doMarchSS(unsigned int lowAddr, unsigned int highAddr, int bankNum);
+
+int doMarchSS_droopVoltage(double nominalVoltage, double droopVoltage);
+int doMarchSS_SRAMBank0_droopVoltage(double nominalVoltage, double droopVoltage);
+int doMarchSS_SRAMBank1_droopVoltage(double nominalVoltage, double droopVoltage);
 
 #endif

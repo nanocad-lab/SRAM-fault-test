@@ -1,24 +1,34 @@
-/* mbed Microcontroller Library - SPISlave
- * Copyright (c) 2010-2011 ARM Limited. All rights reserved. 
+/* mbed Microcontroller Library
+ * Copyright (c) 2006-2013 ARM Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 #ifndef MBED_SPISLAVE_H
 #define MBED_SPISLAVE_H
 
-#include "device.h"
+#include "platform.h"
 
 #if DEVICE_SPISLAVE
 
-#include "platform.h"
-#include "PinNames.h"
-#include "PeripheralNames.h"
-#include "Base.h"
+#include "spi_api.h"
 
 namespace mbed {
 
 /** A SPI slave, used for communicating with a SPI Master device
  *
- *  The default format is set to 8-bits, mode 0, and a clock frequency of 1MHz
+ * The default format is set to 8-bits, mode 0, and a clock frequency of 1MHz
+ *
+ * @Note Synchronization level: Not protected
  *
  * Example:
  * @code
@@ -39,15 +49,12 @@ namespace mbed {
  *     }
  * }
  * @endcode
- */ 
-class SPISlave : public Base {
+ */
+class SPISlave {
 
 public:
 
     /** Create a SPI slave connected to the specified pins
-     *
-     *  Pin Options:
-     *  (5, 6, 7i, 8) or (11, 12, 13, 14)
      *
      *  mosi or miso can be specfied as NC if not used
      *
@@ -55,10 +62,8 @@ public:
      *  @param miso SPI Master In, Slave Out pin
      *  @param sclk SPI Clock pin
      *  @param ssel SPI chip select pin
-     *  @param name (optional) A string to identify the object     
      */
-    SPISlave(PinName mosi, PinName miso, PinName sclk, PinName ssel,
-        const char *name = NULL);
+    SPISlave(PinName mosi, PinName miso, PinName sclk, PinName ssel);
 
     /** Configure the data transmission format
      *
@@ -66,11 +71,11 @@ public:
      *  @param mode Clock polarity and phase mode (0 - 3)
      *
      * @code
-     * mode | POL PHA 
-     * -----+--------     
-     *   0  |  0   0 
+     * mode | POL PHA
+     * -----+--------
+     *   0  |  0   0
      *   1  |  0   1
-     *   2  |  1   0 
+     *   2  |  1   0
      *   3  |  1   1
      * @endcode
      */
@@ -105,13 +110,11 @@ public:
     void reply(int value);
 
 protected:
+    spi_t _spi;
 
-    SPIName _spi;
-    
     int _bits;
     int _mode;
     int _hz;
-
 };
 
 } // namespace mbed

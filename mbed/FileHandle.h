@@ -1,49 +1,63 @@
-/* mbed Microcontroller Library - FileHandler
- * Copyright (c) 2007-2009 ARM Limited. All rights reserved.
- */ 
- 
+/* mbed Microcontroller Library
+ * Copyright (c) 2006-2013 ARM Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 #ifndef MBED_FILEHANDLE_H
 #define MBED_FILEHANDLE_H
 
 typedef int FILEHANDLE;
 
 #include <stdio.h>
-#ifdef __ARMCC_VERSION
+
+#if defined(__ARMCC_VERSION) || defined(__ICCARM__)
 typedef int ssize_t;
 typedef long off_t;
+
 #else
-#include <sys/types.h>
+#   include <sys/types.h>
 #endif
 
-namespace mbed { 
+namespace mbed {
 
 /** An OO equivalent of the internal FILEHANDLE variable
  *  and associated _sys_* functions.
  *
- *  FileHandle is an abstract class, needing at least sys_write and
+ * FileHandle is an abstract class, needing at least sys_write and
  *  sys_read to be implmented for a simple interactive device.
  *
- *  No one ever directly tals to/instanciates a FileHandle - it gets 
+ * No one ever directly tals to/instanciates a FileHandle - it gets
  *  created by FileSystem, and wrapped up by stdio.
+ *
+ * @Note Synchronization level: Set by subclass
  */
 class FileHandle {
 
 public:
-
     /** Write the contents of a buffer to the file
      *
      *  @param buffer the buffer to write from
      *  @param length the number of characters to write
      *
      *  @returns
-     *    The number of characters written (possibly 0) on success, -1 on error.
+     *  The number of characters written (possibly 0) on success, -1 on error.
      */
     virtual ssize_t write(const void* buffer, size_t length) = 0;
 
     /** Close the file
      *
      *  @returns
-     *    Zero on success, -1 on error.
+     *  Zero on success, -1 on error.
      */
     virtual int close() = 0;
 
@@ -54,18 +68,18 @@ public:
      *  @param length the number of characters to read
      *
      *  @returns
-     *    The number of characters read (zero at end of file) on success, -1 on error.
+     *  The number of characters read (zero at end of file) on success, -1 on error.
      */
     virtual ssize_t read(void* buffer, size_t length) = 0;
 
     /** Check if the handle is for a interactive terminal device.
-     *  If so, line buffered behaviour is used by default
+     * If so, line buffered behaviour is used by default
      *
      *  @returns
      *    1 if it is a terminal,
      *    0 otherwise
      */
-    virtual int isatty() = 0 ;
+    virtual int isatty() = 0;
 
     /** Move the file position to a given offset from a given location.
      *
@@ -89,19 +103,38 @@ public:
     virtual int fsync() = 0;
 
     virtual off_t flen() {
+        lock();
         /* remember our current position */
         off_t pos = lseek(0, SEEK_CUR);
-        if(pos == -1) return -1;
+        if(pos == -1) {
+            unlock();
+            return -1;
+        }
         /* seek to the end to get the file length */
         off_t res = lseek(0, SEEK_END);
         /* return to our old position */
         lseek(pos, SEEK_SET);
+        unlock();
         return res;
     }
 
+    virtual ~FileHandle();
+
+protected:
+
+    /** Acquire exclusive access to this object.
+     */
+    virtual void lock() {
+        // Stub
+    }
+
+    /** Release exclusive access to this object.
+     */
+    virtual void unlock() {
+        // Stub
+    }
 };
 
 } // namespace mbed
 
 #endif
-

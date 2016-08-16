@@ -1,29 +1,35 @@
-/* mbed Microcontroller Library - InterruptIn
- * Copyright (c) 2006-2011 ARM Limited. All rights reserved.
- */ 
- 
+/* mbed Microcontroller Library
+ * Copyright (c) 2006-2013 ARM Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 #ifndef MBED_INTERRUPTIN_H
 #define MBED_INTERRUPTIN_H
 
-#include "device.h"
+#include "platform.h"
 
 #if DEVICE_INTERRUPTIN
 
-#include "platform.h"
-#include "PinNames.h"
-#include "PeripheralNames.h"
-#include "Base.h"
-#include "FunctionPointer.h"
-
-#if defined(TARGET_LPC1768) || defined(TARGET_LPC2368)
-#define CHANNEL_NUM   48
-#elif defined(TARGET_LPC11U24)
-#define CHANNEL_NUM    8
-#endif
+#include "gpio_api.h"
+#include "gpio_irq_api.h"
+#include "Callback.h"
+#include "critical.h"
 
 namespace mbed {
 
 /** A digital interrupt input, used to call a function on a rising or falling edge
+ *
+ * @Note Synchronization level: Interrupt safe
  *
  * Example:
  * @code
@@ -47,7 +53,7 @@ namespace mbed {
  * }
  * @endcode
  */
-class InterruptIn : public Base {
+class InterruptIn {
 
 public:
 
@@ -56,49 +62,56 @@ public:
      *  @param pin InterruptIn pin to connect to
      *  @param name (optional) A string to identify the object
      */
-    InterruptIn(PinName pin, const char *name = NULL);
-#if defined(TARGET_LPC11U24)
+    InterruptIn(PinName pin);
     virtual ~InterruptIn();
-#endif
- 
-     int read();
-#ifdef MBED_OPERATORS
+
+    /** Read the input, represented as 0 or 1 (int)
+     *
+     *  @returns
+     *    An integer representing the state of the input pin,
+     *    0 for logical 0, 1 for logical 1
+     */
+    int read();
+
+    /** An operator shorthand for read()
+     */
     operator int();
 
-#endif
-     
+
     /** Attach a function to call when a rising edge occurs on the input
      *
-     *  @param fptr A pointer to a void function, or 0 to set as none
+     *  @param func A pointer to a void function, or 0 to set as none
      */
-    void rise(void (*fptr)(void));
+    void rise(Callback<void()> func);
 
     /** Attach a member function to call when a rising edge occurs on the input
-     *     
-     *  @param tptr pointer to the object to call the member function on
-     *  @param mptr pointer to the member function to be called
+     *
+     *  @param obj pointer to the object to call the member function on
+     *  @param method pointer to the member function to be called
      */
-    template<typename T>
-    void rise(T* tptr, void (T::*mptr)(void)) {
-        _rise.attach(tptr, mptr);
-        setup_interrupt(1, 1);
+    template<typename T, typename M>
+    void rise(T *obj, M method) {
+        core_util_critical_section_enter();
+        rise(Callback<void()>(obj, method));
+        core_util_critical_section_exit();
     }
 
     /** Attach a function to call when a falling edge occurs on the input
      *
-     *  @param fptr A pointer to a void function, or 0 to set as none
+     *  @param func A pointer to a void function, or 0 to set as none
      */
-    void fall(void (*fptr)(void));
+    void fall(Callback<void()> func);
 
     /** Attach a member function to call when a falling edge occurs on the input
-     *     
-     *  @param tptr pointer to the object to call the member function on
-     *  @param mptr pointer to the member function to be called
+     *
+     *  @param obj pointer to the object to call the member function on
+     *  @param method pointer to the member function to be called
      */
-    template<typename T>
-    void fall(T* tptr, void (T::*mptr)(void)) {
-        _fall.attach(tptr, mptr);
-        setup_interrupt(0, 1);
+    template<typename T, typename M>
+    void fall(T *obj, M method) {
+        core_util_critical_section_enter();
+        fall(Callback<void()>(obj, method));
+        core_util_critical_section_exit();
     }
 
     /** Set the input pin mode
@@ -106,29 +119,25 @@ public:
      *  @param mode PullUp, PullDown, PullNone
      */
     void mode(PinMode pull);
-    
-    static InterruptIn *_irq_objects[CHANNEL_NUM];
-    
-#if defined(TARGET_LPC1768) || defined(TARGET_LPC2368)
-    static void _irq();
-#elif defined(TARGET_LPC11U24)
-    static void handle_interrupt_in(unsigned int channel);
-    static void _irq0(); static void _irq1();
-    static void _irq2(); static void _irq3();
-    static void _irq4(); static void _irq5();
-    static void _irq6(); static void _irq7();
-#endif
+
+    /** Enable IRQ. This method depends on hw implementation, might enable one
+     *  port interrupts. For further information, check gpio_irq_enable().
+     */
+    void enable_irq();
+
+    /** Disable IRQ. This method depends on hw implementation, might disable one
+     *  port interrupts. For further information, check gpio_irq_disable().
+     */
+    void disable_irq();
+
+    static void _irq_handler(uint32_t id, gpio_irq_event event);
 
 protected:
-    PinName _pin;
-#if defined(TARGET_LPC11U24)
-    Channel _channel;
-#endif
-    FunctionPointer _rise;
-    FunctionPointer _fall;
+    gpio_t gpio;
+    gpio_irq_t gpio_irq;
 
-    void setup_interrupt(int rising, int enable);
-    
+    Callback<void()> _rise;
+    Callback<void()> _fall;
 };
 
 } // namespace mbed
