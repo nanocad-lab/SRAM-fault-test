@@ -177,5 +177,18 @@ void power_down()
 
 void adjustSRAMVoltage(float voltage)
 {
-    power_core(voltage); //assumption since dpcs power_up.cpp's adjusting SRAM voltage is same as adjusting core
+    //assumption is that only SRAM voltage needs to be adjusted, other voltages
+    //will not affect SRAM.
+    
+    float mem_volt = voltage;
+    if (mem_volt > 1.0) { //clamp mem_volt at a maximum of 1.5 volt
+        //_USB_CONSOLE.printf("Requested memory voltage was %0.02f, clamping to 1.0 V", mem_volt);
+        mem_volt = 1.0;
+    }
+    
+    power_chan(MEM1VDD, mem_volt);//power_chan(MEM1VDD, 1.0);
+    wait(POWER_UP_TIME);
+    power_chan(MEM2VDD, mem_volt);//power_chan(MEM2VDD, 1.0);
+    wait(POWER_UP_TIME);
+    
 }

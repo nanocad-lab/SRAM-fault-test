@@ -1,5 +1,6 @@
 
 #include "mbed.h"
+#include "string"
 #include "dac.h"
 #include "board_test.h"
 #include "scan.h"
@@ -23,9 +24,14 @@ FILE* _FP; //PORT THIS FUNCTIONALITY FROM DPCS
 
 DigitalOut myled(LED4);
 
+//#define TEST_DMEM                             // uncomment this to test Data Memory, currently post-processing and march test functions do not support data memory
+
 #ifdef WRITE_RESULTS
 //LocalFileSystem local("local");               // Create the local filesystem under the name "local"
 #endif
+
+
+
 
 int doDroopTest(double nominalVoltage, double droopVoltage) {
     fprintf(_FP, "Droop Voltage %f,,Word Number,Fault Code\n", droopVoltage);
@@ -125,50 +131,55 @@ int standardMarchTests(double minVoltage, double maxVoltage, double voltageStep,
     for (double voltage = maxVoltage; voltage >= minVoltage; voltage -= voltageStep) {
         //Init file to write to
         _USB_CONSOLE.printf("** Opening data file...\r\n");
-        if (iter == 0)
-            _FP = fopen("/local/data0.csv", "w");
-        else if (iter == 1)
-            _FP = fopen("/local/data1.csv", "w");
-        else if (iter == 2)
-            _FP = fopen("/local/data2.csv", "w");
-        else if (iter == 3)
-            _FP = fopen("/local/data3.csv", "w");
-        else if (iter == 4)
-            _FP = fopen("/local/data4.csv", "w");
-        else if (iter == 5)
-            _FP = fopen("/local/data5.csv", "w");
-        else if (iter == 6)
-            _FP = fopen("/local/data6.csv", "w");
-        else if (iter == 7)
-            _FP = fopen("/local/data7.csv", "w");
-        else if (iter == 8)
-            _FP = fopen("/local/data8.csv", "w");
-        else if (iter == 9)
-            _FP = fopen("/local/data9.csv", "w");
-        else if (iter == 10)
-            _FP = fopen("/local/data10.csv", "w");
-        else if (iter == 11)
-            _FP = fopen("/local/data11.csv", "w");
-        else if (iter == 12)
-            _FP = fopen("/local/data12.csv", "w");
-        else if (iter == 13)
-            _FP = fopen("/local/data13.csv", "w");
-        else if (iter == 14)
-            _FP = fopen("/local/data14.csv", "w");
-        else if (iter == 15)
-            _FP = fopen("/local/data15.csv", "w");
-        else if (iter == 16)
-            _FP = fopen("/local/data16.csv", "w");
-        else if (iter == 17)
-            _FP = fopen("/local/data17.csv", "w");
-        else if (iter == 18)
-            _FP = fopen("/local/data18.csv", "w");
-        else if (iter == 19)
-            _FP = fopen("/local/data19.csv", "w");
-        else if (iter == 20)
-            _FP = fopen("/local/data20.csv", "w");
-        else
-            _FP = fopen("/local/dataUNK.csv", "w");
+        char to_c_str[10];
+        sprintf(to_c_str, "%d", iter);
+        string iterStr(to_c_str);
+        string fname("/local/data" + iterStr + ".csv");
+        _FP = fopen(fname.c_str(), "w");
+//        if (iter == 0)
+//            _FP = fopen("/local/data0.csv", "w");
+//        else if (iter == 1)
+//            _FP = fopen("/local/data1.csv", "w");
+//        else if (iter == 2)
+//            _FP = fopen("/local/data2.csv", "w");
+//        else if (iter == 3)
+//            _FP = fopen("/local/data3.csv", "w");
+//        else if (iter == 4)
+//            _FP = fopen("/local/data4.csv", "w");
+//        else if (iter == 5)
+//            _FP = fopen("/local/data5.csv", "w");
+//        else if (iter == 6)
+//            _FP = fopen("/local/data6.csv", "w");
+//        else if (iter == 7)
+//            _FP = fopen("/local/data7.csv", "w");
+//        else if (iter == 8)
+//            _FP = fopen("/local/data8.csv", "w");
+//        else if (iter == 9)
+//            _FP = fopen("/local/data9.csv", "w");
+//        else if (iter == 10)
+//            _FP = fopen("/local/data10.csv", "w");
+//        else if (iter == 11)
+//            _FP = fopen("/local/data11.csv", "w");
+//        else if (iter == 12)
+//            _FP = fopen("/local/data12.csv", "w");
+//        else if (iter == 13)
+//            _FP = fopen("/local/data13.csv", "w");
+//        else if (iter == 14)
+//            _FP = fopen("/local/data14.csv", "w");
+//        else if (iter == 15)
+//            _FP = fopen("/local/data15.csv", "w");
+//        else if (iter == 16)
+//            _FP = fopen("/local/data16.csv", "w");
+//        else if (iter == 17)
+//            _FP = fopen("/local/data17.csv", "w");
+//        else if (iter == 18)
+//            _FP = fopen("/local/data18.csv", "w");
+//        else if (iter == 19)
+//            _FP = fopen("/local/data19.csv", "w");
+//        else if (iter == 20)
+//            _FP = fopen("/local/data20.csv", "w");
+//        else
+//            _FP = fopen("/local/dataUNK.csv", "w");
             
         if (_FP == NULL) {
             _USB_CONSOLE.printf("** !!! ERROR: Couldn't open data file, iter %d\r\n", iter);
@@ -213,6 +224,7 @@ int standardMarchTests(double minVoltage, double maxVoltage, double voltageStep,
 int main()
 {
     DigitalOut FINISH_FLAG (LED3);
+    _USB_CONSOLE.baud(9600);
     
     //begin variables port from dpcs
     //unsigned int value;
@@ -306,14 +318,20 @@ int main()
     vmin = 0.449;
     vmax = 0.700;
     vstep = 0.025;
+    
+#ifdef TEST_DMEM
+    lowAddr = DMEM_MIN;
+    highAddr = DMEM_MAX - 0x04;
+    bankNum = 1;
+#else //TEST_IMEM
     lowAddr = IMEM_MIN;
     highAddr = IMEM_MAX - 0x04;
     bankNum = 0;
+#endif
     
     retval = standardMarchTests(vmin, vmax, vstep, lowAddr, highAddr, bankNum);
     
-    // Insert another round of March Tests for DMem
-    // standardMarchTests() will need to be rewritten as to not overwrite IMem tests
+    // If another round of March Tests is inserted for DMem, then dpcs-sram-fault-test-post-process will need to be updated to read the data files as well
  
     if (retval != 0)
         _USB_CONSOLE.printf("** Testing failed!\r\n");

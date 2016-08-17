@@ -21,6 +21,7 @@ int marchSS_M0(unsigned int bankNum, unsigned int base_addr, unsigned int end_ad
     value = ZERO;
     for (address = base_addr; address <= end_addr; address += stride) {
         //w0
+        //_USB_CONSOLE.printf("Writing to address %X \r\n", address);
         _JTAG->writeMemory(address, value);
         iter++;
     }
@@ -95,10 +96,10 @@ int marchSS_M1(unsigned int bankNum, unsigned int base_addr, unsigned int end_ad
         _JTAG->writeMemory(address, value);
         
         error = error_byte3 + error_byte2 + error_byte1 + error_byte0;
-      //  if (error > 0)
+      //  if (error > 0) //does this need to be uncommented?
         fprintf(_FP, "%u,%d,", address, error); //Log the absolute address and the error code (0-15).
-       // if (error > 0)
-       //     _USB_CONSOLE.printf("M1 ERROR at word %d, code %d, expected 0x%08X\r\n", iter*stride, error, ZERO);
+        //if (error > 0) //uncommented to test for errors?
+        //    _USB_CONSOLE.printf("M1 ERROR at word %d, code %d, expected 0x%08X\r\n", iter*stride, error, ZERO);
         
         iter++;
     }
@@ -174,10 +175,10 @@ int marchSS_M2(unsigned int bankNum, unsigned int base_addr, unsigned int end_ad
         _JTAG->writeMemory(address, value);
         
         error = error_byte3 + error_byte2 + error_byte1 + error_byte0;
-     //   if (error > 0)
+     //   if (error > 0) //does this also need to be uncommented?
         fprintf(_FP, "%u,%d,", address, error); //Log the absolute address and the error code (0-15).
-      //  if (error > 0)
-      //      _USB_CONSOLE.printf("M2 ERROR at word %d, code %d, expected 0x%08X\r\n", iter*stride, error, ONE);
+        //if (error > 0)
+        //    _USB_CONSOLE.printf("M2 ERROR at word %d, code %d, expected 0x%08X\r\n", iter*stride, error, ONE);
         
         iter++;
     }
@@ -256,8 +257,8 @@ int marchSS_M3(unsigned int bankNum, unsigned int base_addr, unsigned int end_ad
         error = error_byte3 + error_byte2 + error_byte1 + error_byte0;
        // if (error > 0)
         fprintf(_FP, "%u,%d,", address, error); //Log the absolute address and the error code (0-15).
-      //  if (error > 0)
-      //      _USB_CONSOLE.printf("M3 ERROR at word %d, code %d, expected 0x%08X\r\n", iter*stride, error, ZERO);
+        //if (error > 0)
+        //    _USB_CONSOLE.printf("M3 ERROR at word %d, code %d, expected 0x%08X\r\n", iter*stride, error, ZERO);
         iter++;
     }
     
@@ -335,8 +336,8 @@ int marchSS_M4(unsigned int bankNum, unsigned int base_addr, unsigned int end_ad
         error = error_byte3 + error_byte2 + error_byte1 + error_byte0;
       //  if (error > 0)
         fprintf(_FP, "%u,%d,", address, error); //Log the absolute address and the error code (0-15).
-      //  if (error > 0)
-      //      _USB_CONSOLE.printf("M4 ERROR at word %d, code %d, expected 0x%08X\r\n", iter*stride, error, ONE);
+        //if (error > 0)
+        //    _USB_CONSOLE.printf("M4 ERROR at word %d, code %d, expected 0x%08X\r\n", iter*stride, error, ONE);
         iter++;
     }
     
@@ -383,8 +384,8 @@ int marchSS_M5(unsigned int bankNum, unsigned int base_addr, unsigned int end_ad
         error = error_byte3 + error_byte2 + error_byte1 + error_byte0;
       //  if (error > 0)
         fprintf(_FP, "%u,%d,", address, error); //Log the absolute address and the error code (0-15).
-      //  if (error > 0)
-      //      _USB_CONSOLE.printf("M5 ERROR at word %d, code %d, expected 0x%08X\r\n", iter*stride, error, ZERO);
+        //if (error > 0)
+        //    _USB_CONSOLE.printf("M5 ERROR at word %d, code %d, expected 0x%08X\r\n", iter*stride, error, ZERO);
             
         iter++;
     }
